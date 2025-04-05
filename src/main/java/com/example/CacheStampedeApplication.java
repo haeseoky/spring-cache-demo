@@ -1,11 +1,12 @@
-package com.example.cache;
+package com.example;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
- * Cache Stampede 방지 기법 테스트 애플리케이션
+ * Cache Stampede 방지 기법 및 분산락 테스트 애플리케이션
+ * 클린 아키텍처 패턴으로 구현
  */
 @SpringBootApplication
 @EnableScheduling  // 스케줄링 기능 활성화 (캐시 워밍 용)

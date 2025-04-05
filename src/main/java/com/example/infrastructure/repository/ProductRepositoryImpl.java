@@ -1,4 +1,7 @@
-package com.example.cache;
+package com.example.infrastructure.repository;
+
+import com.example.domain.product.entity.Product;
+import com.example.domain.product.repository.ProductRepository;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -12,19 +15,19 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
 /**
- * 상품 데이터 처리를 위한 Repository
- * 실제 DB 대신 인메모리 Map을 사용하여 구현
+ * 상품 리포지토리 구현체
+ * 실제 DB 대신 인메모리 Map을 사용
  */
 @Repository
-public class ProductRepository {
+public class ProductRepositoryImpl implements ProductRepository {
     
-    private static final Logger log = LoggerFactory.getLogger(ProductRepository.class);
+    private static final Logger log = LoggerFactory.getLogger(ProductRepositoryImpl.class);
     
     // 인메모리 데이터 저장소
     private final Map<Long, Product> products = new HashMap<>();
     
     // 샘플 데이터 초기화
-    public ProductRepository() {
+    public ProductRepositoryImpl() {
         initSampleData();
     }
     
@@ -42,9 +45,7 @@ public class ProductRepository {
         log.info("샘플 상품 데이터 {} 개 초기화 완료", products.size());
     }
     
-    /**
-     * ID로 상품 조회 - 의도적으로 지연 추가하여 DB 조회 시뮬레이션
-     */
+    @Override
     public Optional<Product> findById(Long id) {
         log.info("DB에서 상품 ID {} 조회 시작", id);
         
@@ -61,9 +62,7 @@ public class ProductRepository {
         return Optional.ofNullable(product);
     }
     
-    /**
-     * 인기 상품 ID 목록 반환 (상위 N개)
-     */
+    @Override
     public List<Long> findTopProductIds(int limit) {
         log.info("인기 상품 상위 {} 개 조회", limit);
         
@@ -78,10 +77,9 @@ public class ProductRepository {
         return topIds;
     }
     
-    /**
-     * 상품 저장
-     */
+    @Override
     public Product save(Product product) {
+        log.info("상품 저장: ID={}, 이름={}", product.getId(), product.getName());
         products.put(product.getId(), product);
         return product;
     }

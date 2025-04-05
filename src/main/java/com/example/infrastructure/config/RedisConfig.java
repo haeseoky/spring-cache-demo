@@ -1,4 +1,4 @@
-package com.example.cache;
+package com.example.infrastructure.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -13,6 +13,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 /**
  * Redis 연결 및 템플릿 설정
+ * 도메인 엔티티용 RedisTemplate과 분산락용 String RedisTemplate 제공
  */
 @Configuration
 public class RedisConfig {
@@ -38,6 +39,9 @@ public class RedisConfig {
         return serializer;
     }
 
+    /**
+     * 도메인 엔티티용 RedisTemplate
+     */
     @Bean
     public RedisTemplate<String, Object> redisTemplate() {
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
@@ -50,6 +54,24 @@ public class RedisConfig {
         // Hash 키와 값에 대한 직렬화 설정
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
         redisTemplate.setHashValueSerializer(jackson2JsonRedisSerializer());
+        
+        redisTemplate.afterPropertiesSet();
+        return redisTemplate;
+    }
+    
+    /**
+     * 분산락 및 단순 문자열 저장용 RedisTemplate
+     */
+    @Bean(name = "lockStringRedisTemplate")
+    public RedisTemplate<String, String> lockStringRedisTemplate() {
+        RedisTemplate<String, String> redisTemplate = new RedisTemplate<>();
+        redisTemplate.setConnectionFactory(redisConnectionFactory());
+        
+        // String 직렬화 사용
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+        redisTemplate.setValueSerializer(new StringRedisSerializer());
+        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
+        redisTemplate.setHashValueSerializer(new StringRedisSerializer());
         
         redisTemplate.afterPropertiesSet();
         return redisTemplate;

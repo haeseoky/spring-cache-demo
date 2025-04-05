@@ -1,4 +1,4 @@
-package com.example.cache;
+package com.example.domain.product.entity;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -10,7 +10,7 @@ import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 
 /**
- * 상품 엔티티 클래스
+ * 상품 도메인 엔티티
  */
 public class Product implements Serializable {
     
@@ -45,6 +45,15 @@ public class Product implements Serializable {
         this.stockQuantity = stockQuantity;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+    }
+    
+    // 비즈니스 메서드 - 재고 감소
+    public void decreaseStock(int quantity) {
+        if (stockQuantity < quantity) {
+            throw new IllegalArgumentException("재고가 부족합니다. 현재 재고: " + stockQuantity);
+        }
+        stockQuantity -= quantity;
+        updatedAt = LocalDateTime.now();
     }
     
     // Getter & Setter
