@@ -4,8 +4,8 @@ import com.example.application.event.dto.EventDto;
 import com.example.application.event.service.FirstComeApplicationService;
 import com.example.application.event.service.FirstComeApplicationService.ParticipationResult;
 import com.example.application.event.service.FirstComeApplicationService.EventStatusResult;
-import com.example.common.dto.PageRequest;
 import com.example.common.dto.PageResponse;
+import com.example.domain.common.SortDirection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -204,8 +204,8 @@ public class FirstComeController {
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "DESC") String direction) {
         
-        PageRequest pageRequest = new PageRequest(page, size, sortBy, direction);
-        PageResponse<EventDto> response = eventService.getAllEventsWithPagination(pageRequest);
+        // 애플리케이션 서비스 호출 - 기본 파라미터 전달
+        PageResponse<EventDto> response = eventService.getAllEventsWithPagination(page, size, sortBy, direction);
         
         return ResponseEntity.ok(response);
     }

@@ -1,8 +1,10 @@
 package com.example.application.event.service;
 
 import com.example.application.event.dto.EventDto;
-import com.example.common.dto.PageRequest;
 import com.example.common.dto.PageResponse;
+import com.example.domain.common.Page;
+import com.example.domain.common.Pageable;
+import com.example.domain.common.SortDirection;
 import com.example.domain.event.entity.Event;
 import com.example.domain.event.entity.EventParticipation;
 import com.example.domain.event.repository.EventRepository;
@@ -15,7 +17,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -193,29 +194,29 @@ public class FirstComeApplicationService {
     }
     
     /**
-     * 모든 이벤트 페이징 조회
+     * 모든 이벤트 페이징 조회 - 도메인 객체를 활용한 페이지네이션
      */
-    public PageResponse<EventDto> getAllEventsWithPagination(PageRequest pageRequest) {
-        log.debug("이벤트 페이징 조회: {}", pageRequest);
+    public PageResponse<EventDto> getAllEventsWithPagination(int page, int size, String sortBy, String direction) {
+        log.debug("이벤트 페이징 조회: page={}, size={}, sortBy={}, direction={}", page, size, sortBy, direction);
         
-        // 도메인 레이어의 페이지네이션 메서드 호출
-        List<Event> events = eventRepository.findAllWithPagination(
-                pageRequest.getPage(), 
-                pageRequest.getSize(), 
-                pageRequest.getSortBy(), 
-                pageRequest.getDirection()
-        );
+        // 도메인 객체로 변환
+        Pageable pageable = new Pageable(page, size, sortBy, SortDirection.fromString(direction));
+        
+        // 도메인 레이어 호출
+        Page<Event> eventPage = eventRepository.findAll(pageable);
         
         // Entity -> DTO 변환
-        List<EventDto> eventDtos = events.stream()
+        List<EventDto> eventDtos = eventPage.getContent().stream()
                 .map(EventDto::fromEntity)
                 .collect(Collectors.toList());
         
-        // 전체 요소 수 조회
-        long total = eventRepository.count();
-        
-        // 페이지 응답 생성
-        return new PageResponse<>(eventDtos, pageRequest.getPage(), pageRequest.getSize(), total);
+        // DTO 응답 생성
+        return new PageResponse<>(
+                eventDtos, 
+                eventPage.getNumber(), 
+                eventPage.getSize(), 
+                eventPage.getTotalElements()
+        );
     }
     
     /**

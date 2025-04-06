@@ -1,5 +1,7 @@
 package com.example.domain.event.repository;
 
+import com.example.domain.common.Page;
+import com.example.domain.common.Pageable;
 import com.example.domain.event.entity.Event;
 import java.util.List;
 import java.util.Optional;
@@ -39,13 +41,10 @@ public interface EventRepository {
     /**
      * 모든 이벤트 페이징 조회
      * 
-     * @param page 페이지 번호 (0부터 시작)
-     * @param size 페이지 크기
-     * @param sortBy 정렬 필드
-     * @param direction 정렬 방향 (ASC, DESC)
+     * @param pageable 페이징 정보
      * @return 페이징된 이벤트 목록
      */
-    List<Event> findAllWithPagination(int page, int size, String sortBy, String direction);
+    Page<Event> findAll(Pageable pageable);
     
     /**
      * 전체 이벤트 개수 조회

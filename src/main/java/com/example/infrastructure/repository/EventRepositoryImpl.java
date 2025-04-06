@@ -1,5 +1,8 @@
 package com.example.infrastructure.repository;
 
+import com.example.domain.common.Page;
+import com.example.domain.common.Pageable;
+import com.example.domain.common.SortDirection;
 import com.example.domain.event.entity.Event;
 import com.example.domain.event.repository.EventRepository;
 import org.slf4j.Logger;
@@ -227,8 +230,8 @@ public class EventRepositoryImpl implements EventRepository {
     }
     
     @Override
-    public List<Event> findAllWithPagination(int page, int size, String sortBy, String direction) {
-        log.debug("이벤트 페이징 조회: page={}, size={}, sortBy={}, direction={}", page, size, sortBy, direction);
+    public Page<Event> findAll(Pageable pageable) {
+        log.debug("이벤트 페이징 조회: {}", pageable);
         
         // Redis에서 EVENT_KEY_PREFIX로 시작하는 모든 키 조회
         ScanOptions options = ScanOptions.scanOptions().match(EVENT_KEY_PREFIX + "*").count(100).build();
@@ -236,7 +239,6 @@ public class EventRepositoryImpl implements EventRepository {
         
         redisTemplate.execute((connection) -> {
             try (Cursor<byte[]> cursor = connection.keyCommands().scan(options)) {
-
                 cursor.stream().forEach(key -> {
                     String keyStr = new String(key);
                     keys.add(keyStr);
@@ -258,34 +260,35 @@ public class EventRepositoryImpl implements EventRepository {
         }
         
         // 정렬 적용
-        if ("id".equals(sortBy)) {
+        if ("id".equals(pageable.getSortBy())) {
             events.sort(Comparator.comparing(Event::getId));
-        } else if ("name".equals(sortBy)) {
+        } else if ("name".equals(pageable.getSortBy())) {
             events.sort(Comparator.comparing(Event::getName));
-        } else if ("totalQuantity".equals(sortBy)) {
+        } else if ("totalQuantity".equals(pageable.getSortBy())) {
             events.sort(Comparator.comparing(Event::getTotalQuantity));
-        } else if ("remainingQuantity".equals(sortBy)) {
+        } else if ("remainingQuantity".equals(pageable.getSortBy())) {
             events.sort(Comparator.comparing(Event::getRemainingQuantity));
-        } else if ("startTime".equals(sortBy)) {
+        } else if ("startTime".equals(pageable.getSortBy())) {
             events.sort(Comparator.comparing(Event::getStartTime, Comparator.nullsLast(Comparator.naturalOrder())));
-        } else if ("endTime".equals(sortBy)) {
+        } else if ("endTime".equals(pageable.getSortBy())) {
             events.sort(Comparator.comparing(Event::getEndTime, Comparator.nullsLast(Comparator.naturalOrder())));
         }
         
         // 정렬 방향 적용
-        if ("DESC".equalsIgnoreCase(direction)) {
+        if (SortDirection.DESC.equals(pageable.getDirection())) {
             Collections.reverse(events);
         }
         
         // 페이지네이션 적용
-        int start = page * size;
-        int end = Math.min(start + size, events.size());
+        int start = pageable.getPage() * pageable.getSize();
+        int end = Math.min(start + pageable.getSize(), events.size());
         
         if (start >= events.size()) {
-            return Collections.emptyList();
+            return new Page<>(Collections.emptyList(), pageable.getPage(), pageable.getSize(), events.size());
         }
         
-        return events.subList(start, end);
+        List<Event> pageContent = events.subList(start, end);
+        return new Page<>(pageContent, pageable.getPage(), pageable.getSize(), events.size());
     }
     
     @Override
