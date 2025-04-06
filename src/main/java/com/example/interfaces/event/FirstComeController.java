@@ -4,6 +4,8 @@ import com.example.application.event.dto.EventDto;
 import com.example.application.event.service.FirstComeApplicationService;
 import com.example.application.event.service.FirstComeApplicationService.ParticipationResult;
 import com.example.application.event.service.FirstComeApplicationService.EventStatusResult;
+import com.example.common.dto.PageRequest;
+import com.example.common.dto.PageResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -190,6 +192,22 @@ public class FirstComeController {
     @GetMapping("/status/{eventId}")
     public ResponseEntity<EventStatusResult> getEventStatus(@PathVariable String eventId) {
         return ResponseEntity.ok(eventService.getEventStatus(eventId));
+    }
+    
+    /**
+     * 페이지네이션을 사용한 모든 이벤트 조회
+     */
+    @GetMapping
+    public ResponseEntity<PageResponse<EventDto>> getAllEvents(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "DESC") String direction) {
+        
+        PageRequest pageRequest = new PageRequest(page, size, sortBy, direction);
+        PageResponse<EventDto> response = eventService.getAllEventsWithPagination(pageRequest);
+        
+        return ResponseEntity.ok(response);
     }
     
     /**

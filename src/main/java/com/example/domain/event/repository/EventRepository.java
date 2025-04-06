@@ -1,6 +1,7 @@
 package com.example.domain.event.repository;
 
 import com.example.domain.event.entity.Event;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -34,4 +35,22 @@ public interface EventRepository {
      * 이벤트 초기화 (수량 설정)
      */
     void setQuantity(String eventId, int quantity);
+    
+    /**
+     * 모든 이벤트 페이징 조회
+     * 
+     * @param page 페이지 번호 (0부터 시작)
+     * @param size 페이지 크기
+     * @param sortBy 정렬 필드
+     * @param direction 정렬 방향 (ASC, DESC)
+     * @return 페이징된 이벤트 목록
+     */
+    List<Event> findAllWithPagination(int page, int size, String sortBy, String direction);
+    
+    /**
+     * 전체 이벤트 개수 조회
+     * 
+     * @return 전체 이벤트 개수
+     */
+    long count();
 }

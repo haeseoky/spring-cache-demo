@@ -1,0 +1,61 @@
+### 이벤트 선착순 기능 테스트 HTTP 요청 파일
+### 이 파일은 IntelliJ IDEA, VS Code 등의 REST Client 플러그인으로 실행할 수 있습니다.
+
+### 변수 설정
+@host = http://localhost:8080
+@eventId = event1
+@userId = user1
+
+### 1. 이벤트 초기화
+POST {{host}}/api/events/init/{{eventId}}?name=테스트 이벤트&quantity=100
+Content-Type: application/json
+
+### 2. 이벤트 신청 - Spin Lock 방식
+POST {{host}}/api/events/participate/spinlock/{{eventId}}?userId={{userId}}
+Content-Type: application/json
+
+### 3. 이벤트 신청 - Lua 스크립트 기반 Lock 사용
+POST {{host}}/api/events/participate/lualock/{{eventId}}?userId={{userId}}
+Content-Type: application/json
+
+### 4. 이벤트 신청 - Redisson Lock 사용
+POST {{host}}/api/events/participate/redisson/{{eventId}}?userId={{userId}}
+Content-Type: application/json
+
+### 5. 이벤트 신청 - Redis INCR 명령어 사용
+POST {{host}}/api/events/participate/incr/{{eventId}}?userId={{userId}}
+Content-Type: application/json
+
+### 6. 이벤트 현황 조회
+GET {{host}}/api/events/status/{{eventId}}
+
+### 7. 여러 사용자 이벤트 신청 시뮬레이션 (Spin Lock)
+GET {{host}}/api/events/simulate/{{eventId}}?concurrentUsers=20&lockType=spinlock
+
+### 8. 여러 사용자 이벤트 신청 시뮬레이션 (Lua Lock)
+GET {{host}}/api/events/simulate/{{eventId}}?concurrentUsers=20&lockType=lualock
+
+### 9. 여러 사용자 이벤트 신청 시뮬레이션 (Redisson Lock)
+GET {{host}}/api/events/simulate/{{eventId}}?concurrentUsers=20&lockType=redisson
+
+### 10. 여러 사용자 이벤트 신청 시뮬레이션 (INCR 방식)
+GET {{host}}/api/events/simulate/{{eventId}}?concurrentUsers=20&lockType=incr
+
+### 11. 다양한 설정으로 시뮬레이션 (사용자 수 변경)
+GET {{host}}/api/events/simulate/{{eventId}}?concurrentUsers=50&lockType=redisson
+
+### 12. 동일 사용자 중복 신청 테스트 (스핀락)
+POST {{host}}/api/events/participate/spinlock/{{eventId}}?userId={{userId}}
+Content-Type: application/json
+
+### 13. 동일 사용자 중복 신청 테스트 (Lua락)
+POST {{host}}/api/events/participate/lualock/{{eventId}}?userId={{userId}}
+Content-Type: application/json
+
+### 14. 동일 사용자 중복 신청 테스트 (Redisson)
+POST {{host}}/api/events/participate/redisson/{{eventId}}?userId={{userId}}
+Content-Type: application/json
+
+### 15. 동일 사용자 중복 신청 테스트 (INCR)
+POST {{host}}/api/events/participate/incr/{{eventId}}?userId={{userId}}
+Content-Type: application/json

@@ -4,14 +4,14 @@ import com.example.domain.event.entity.Event;
 import com.example.domain.event.repository.EventRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -224,5 +224,86 @@ public class EventRepositoryImpl implements EventRepository {
             event.setRemainingQuantity(quantity);
             redisTemplate.opsForValue().set(EVENT_KEY_PREFIX + eventId, event, EVENT_TTL);
         });
+    }
+    
+    @Override
+    public List<Event> findAllWithPagination(int page, int size, String sortBy, String direction) {
+        log.debug("이벤트 페이징 조회: page={}, size={}, sortBy={}, direction={}", page, size, sortBy, direction);
+        
+        // Redis에서 EVENT_KEY_PREFIX로 시작하는 모든 키 조회
+        ScanOptions options = ScanOptions.scanOptions().match(EVENT_KEY_PREFIX + "*").count(100).build();
+        List<String> keys = new ArrayList<>();
+        
+        redisTemplate.execute((connection) -> {
+            try (Cursor<byte[]> cursor = connection.keyCommands().scan(options)) {
+
+                cursor.stream().forEach(key -> {
+                    String keyStr = new String(key);
+                    keys.add(keyStr);
+                });
+            }
+            return null;
+        }, true);
+        
+        // 모든 이벤트 객체 조회
+        List<Event> events = new ArrayList<>();
+        for (String key : keys) {
+            Object value = redisTemplate.opsForValue().get(key);
+            if (value != null) {
+                Event event = convertToEvent(value);
+                if (event != null) {
+                    events.add(event);
+                }
+            }
+        }
+        
+        // 정렬 적용
+        if ("id".equals(sortBy)) {
+            events.sort(Comparator.comparing(Event::getId));
+        } else if ("name".equals(sortBy)) {
+            events.sort(Comparator.comparing(Event::getName));
+        } else if ("totalQuantity".equals(sortBy)) {
+            events.sort(Comparator.comparing(Event::getTotalQuantity));
+        } else if ("remainingQuantity".equals(sortBy)) {
+            events.sort(Comparator.comparing(Event::getRemainingQuantity));
+        } else if ("startTime".equals(sortBy)) {
+            events.sort(Comparator.comparing(Event::getStartTime, Comparator.nullsLast(Comparator.naturalOrder())));
+        } else if ("endTime".equals(sortBy)) {
+            events.sort(Comparator.comparing(Event::getEndTime, Comparator.nullsLast(Comparator.naturalOrder())));
+        }
+        
+        // 정렬 방향 적용
+        if ("DESC".equalsIgnoreCase(direction)) {
+            Collections.reverse(events);
+        }
+        
+        // 페이지네이션 적용
+        int start = page * size;
+        int end = Math.min(start + size, events.size());
+        
+        if (start >= events.size()) {
+            return Collections.emptyList();
+        }
+        
+        return events.subList(start, end);
+    }
+    
+    @Override
+    public long count() {
+        // 모든 이벤트 키 개수 조회
+        ScanOptions options = ScanOptions.scanOptions().match(EVENT_KEY_PREFIX + "*").count(100).build();
+        List<String> keys = new ArrayList<>();
+        
+        redisTemplate.execute((connection) -> {
+            try (Cursor<byte[]> cursor = connection.keyCommands().scan(options)) {
+                cursor.stream().forEach(key -> {
+                    String keyStr = new String(key);
+                    keys.add(keyStr);
+                });
+            }
+            return null;
+        }, true);
+        
+        return keys.size();
     }
 }

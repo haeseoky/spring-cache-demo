@@ -1,13 +1,14 @@
 package com.example.application.event.service;
 
 import com.example.application.event.dto.EventDto;
+import com.example.common.dto.PageRequest;
+import com.example.common.dto.PageResponse;
 import com.example.domain.event.entity.Event;
 import com.example.domain.event.entity.EventParticipation;
 import com.example.domain.event.repository.EventRepository;
 import com.example.domain.event.service.FirstComeEventDomainService;
 import com.example.infrastructure.lock.DistributedLock;
 import com.example.infrastructure.lock.LockException;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -15,10 +16,10 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * 선착순 이벤트 애플리케이션 서비스
@@ -135,7 +136,6 @@ public class FirstComeApplicationService {
         log.debug("INCR를 사용한 이벤트 참여 시도: 이벤트={}, 사용자={}", eventId, userId);
         
         // 최대 참여 가능 수량
-//        int totalQuantity = eventRepository.getRemainingQuantity(eventId);
         int totalQuantity = eventRepository.findById(eventId).orElse(new Event()).getTotalQuantity();
         try {
             TimeUnit.MILLISECONDS.sleep(100);
@@ -150,7 +150,6 @@ public class FirstComeApplicationService {
         // 참여 가능 여부 판단
         if (currentParticipants > totalQuantity) {
             // 이미 마감된 경우 카운트 롤백
-//            stringRedisTemplate.opsForValue().decrement(participantCountKey);
             log.debug("참여 실패 (수량 초과): 이벤트={}, 사용자={}, 참여자 수/총수량={}/{}", 
                     eventId, userId, currentParticipants-1, totalQuantity);
             
@@ -191,6 +190,32 @@ public class FirstComeApplicationService {
         }
         
         return result;
+    }
+    
+    /**
+     * 모든 이벤트 페이징 조회
+     */
+    public PageResponse<EventDto> getAllEventsWithPagination(PageRequest pageRequest) {
+        log.debug("이벤트 페이징 조회: {}", pageRequest);
+        
+        // 도메인 레이어의 페이지네이션 메서드 호출
+        List<Event> events = eventRepository.findAllWithPagination(
+                pageRequest.getPage(), 
+                pageRequest.getSize(), 
+                pageRequest.getSortBy(), 
+                pageRequest.getDirection()
+        );
+        
+        // Entity -> DTO 변환
+        List<EventDto> eventDtos = events.stream()
+                .map(EventDto::fromEntity)
+                .collect(Collectors.toList());
+        
+        // 전체 요소 수 조회
+        long total = eventRepository.count();
+        
+        // 페이지 응답 생성
+        return new PageResponse<>(eventDtos, pageRequest.getPage(), pageRequest.getSize(), total);
     }
     
     /**
