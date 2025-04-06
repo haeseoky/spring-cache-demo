@@ -1,16 +1,19 @@
 package com.example.domain.event.entity;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
  * 이벤트 도메인 엔티티
  */
-public class Event {
+public class Event implements Serializable {
+    
+    private static final long serialVersionUID = 1L;
     
     private String id;
     private String name;
     private String description;
-    private int totalQuantity;
+    private int totalQuantity = 0;
     private int remainingQuantity;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
@@ -47,7 +50,8 @@ public class Event {
     public boolean isAvailable() {
         LocalDateTime now = LocalDateTime.now();
         return active && remainingQuantity > 0 && 
-               !now.isBefore(startTime) && !now.isAfter(endTime);
+               (startTime == null || !now.isBefore(startTime)) && 
+               (endTime == null || !now.isAfter(endTime));
     }
     
     // 게터 및 세터

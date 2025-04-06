@@ -36,7 +36,12 @@ public class RedisSpinLock implements DistributedLock {
         log.debug("스핀락 획득 시도: {}", lockKey);
         
         // 타임아웃까지 락 획득 시도를 반복
-        while (System.currentTimeMillis() - startTime < timeoutMillis) {
+        while (true) {
+
+            long l = System.currentTimeMillis() - startTime;
+            if(l >=  timeoutMillis) break;
+            log.debug("스핀락 획득 시도: {}ms", l);
+
             boolean acquired = Boolean.TRUE.equals(
                 redisTemplate.opsForValue().setIfAbsent(lockKey, lockValue, timeout)
             );

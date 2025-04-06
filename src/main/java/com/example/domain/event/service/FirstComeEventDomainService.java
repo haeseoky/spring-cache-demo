@@ -3,6 +3,7 @@ package com.example.domain.event.service;
 import com.example.domain.event.entity.Event;
 import com.example.domain.event.entity.EventParticipation;
 import com.example.domain.event.repository.EventRepository;
+import java.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -34,7 +35,13 @@ public class FirstComeEventDomainService {
         // 이벤트 조회
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 이벤트입니다: " + eventId));
-        
+
+        try {
+            Thread.sleep(Duration.ofMillis(50));
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
         // 이벤트 참여 가능 여부 체크
         if (!event.isAvailable()) {
             log.debug("이벤트 참여 불가: 이벤트={}, 사용자={}", eventId, userId);

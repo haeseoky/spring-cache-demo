@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 /**
@@ -25,7 +25,7 @@ public class RedisConfig {
     }
     
     @Bean
-    public ObjectMapper objectMapper() {
+    public ObjectMapper redisObjectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
@@ -33,12 +33,11 @@ public class RedisConfig {
     }
     
     @Bean
-    public Jackson2JsonRedisSerializer<Object> jackson2JsonRedisSerializer() {
-        Jackson2JsonRedisSerializer<Object> serializer = new Jackson2JsonRedisSerializer<>(Object.class);
-        serializer.setObjectMapper(objectMapper());
-        return serializer;
+    public GenericJackson2JsonRedisSerializer genericJackson2JsonRedisSerializer() {
+        // 커스텀 ObjectMapper를 사용하는 생성자 활용
+        return new GenericJackson2JsonRedisSerializer(redisObjectMapper());
     }
-
+    
     /**
      * 도메인 엔티티용 RedisTemplate
      */
@@ -47,13 +46,16 @@ public class RedisConfig {
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory());
         
+        // 커스텀 GenericJackson2JsonRedisSerializer 사용
+        GenericJackson2JsonRedisSerializer serializer = genericJackson2JsonRedisSerializer();
+        
         // 키와 값에 대한 직렬화 설정
         redisTemplate.setKeySerializer(new StringRedisSerializer());
-        redisTemplate.setValueSerializer(jackson2JsonRedisSerializer());
+        redisTemplate.setValueSerializer(serializer);
         
         // Hash 키와 값에 대한 직렬화 설정
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
-        redisTemplate.setHashValueSerializer(jackson2JsonRedisSerializer());
+        redisTemplate.setHashValueSerializer(serializer);
         
         redisTemplate.afterPropertiesSet();
         return redisTemplate;

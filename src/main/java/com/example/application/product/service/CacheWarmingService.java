@@ -52,7 +52,7 @@ public class CacheWarmingService {
      * 인기 상품 캐시 워밍 작업
      * 스케줄러를 사용하여 주기적으로 실행
      */
-    @Scheduled(fixedRate = 60000) // 1분마다 실행 (테스트를 위해 짧게 설정)
+//    @Scheduled(fixedRate = 60000) // 1분마다 실행 (테스트를 위해 짧게 설정)
     public void warmPopularProductsCache() {
         log.info("인기 상품 캐시 워밍 작업 시작");
         

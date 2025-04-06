@@ -8,7 +8,11 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * 이벤트 리포지토리 Redis 구현체
@@ -35,9 +39,116 @@ public class EventRepositoryImpl implements EventRepository {
     public Optional<Event> findById(String eventId) {
         log.debug("이벤트 조회: ID={}", eventId);
         String key = EVENT_KEY_PREFIX + eventId;
+        return getFromRedis(key, this::convertToEvent);
+    }
+    
+    /**
+     * Redis에서 객체를 조회하고 타입에 맞게 변환하는 공통 메서드
+     * @param key Redis 키
+     * @param converter 타입 변환기 함수
+     * @param <T> 반환 타입
+     * @return 조회 결과를 Optional로 래핑
+     */
+    private <T> Optional<T> getFromRedis(String key, Function<Object, T> converter) {
+        Object result = redisTemplate.opsForValue().get(key);
         
-        Event event = (Event) redisTemplate.opsForValue().get(key);
-        return Optional.ofNullable(event);
+        if (result == null) {
+            return Optional.empty();
+        }
+        
+        try {
+            T converted = converter.apply(result);
+            return Optional.ofNullable(converted);
+        } catch (Exception e) {
+            log.error("Redis 데이터 변환 실패: key={}, resultType={}, error={}", 
+                    key, result.getClass().getName(), e.getMessage());
+            return Optional.empty();
+        }
+    }
+    
+    /**
+     * Redis에서 가져온 객체를 Event 타입으로 변환
+     */
+    private Event convertToEvent(Object result) {
+        // 이미 Event 타입인 경우
+        if (result instanceof Event) {
+            return (Event) result;
+        }
+        
+        // Map 타입인 경우 Event 객체로 변환
+        if (result instanceof Map) {
+            log.debug("이벤트 조회 결과 변환 필요: 클래스={}", result.getClass().getName());
+            return convertMapToEvent((Map<String, Object>) result);
+        }
+        
+        // 알 수 없는 타입
+        log.warn("이벤트 조회 결과 타입 오류: {}", result.getClass().getName());
+        return null;
+    }
+    
+    /**
+     * Map 객체를 Event 객체로 변환
+     */
+    private Event convertMapToEvent(Map<String, Object> map) {
+        Event event = new Event();
+        event.setId((String) map.get("id"));
+        event.setName((String) map.get("name"));
+        event.setDescription((String) map.get("description"));
+        
+        // 숫자 타입은 Number로 가져와서 int로 변환
+        if (map.get("totalQuantity") instanceof Number) {
+            event.setTotalQuantity(((Number) map.get("totalQuantity")).intValue());
+        }
+        
+        if (map.get("remainingQuantity") instanceof Number) {
+            event.setRemainingQuantity(((Number) map.get("remainingQuantity")).intValue());
+        }
+        
+        // LocalDateTime 처리
+        event.setStartTime(convertToLocalDateTime(map.get("startTime")));
+        event.setEndTime(convertToLocalDateTime(map.get("endTime")));
+        
+        // Boolean 타입 변환
+        if (map.get("active") instanceof Boolean) {
+            event.setActive((Boolean) map.get("active"));
+        }
+        
+        return event;
+    }
+    
+    /**
+     * 다양한 형태의 날짜/시간 데이터를 LocalDateTime으로 변환
+     */
+    private LocalDateTime convertToLocalDateTime(Object timeObject) {
+        if (timeObject == null) {
+            return null;
+        }
+        
+        try {
+            if (timeObject instanceof LocalDateTime) {
+                return (LocalDateTime) timeObject;
+            } else if (timeObject instanceof String) {
+                return LocalDateTime.parse((String) timeObject);
+            } else if (timeObject instanceof Map) {
+                Map<String, Object> timeMap = (Map<String, Object>) timeObject;
+                if (timeMap.containsKey("$jsr310")) {
+                    return LocalDateTime.parse((String) timeMap.get("epochSecond"));
+                } else if (timeMap.containsKey("year") && timeMap.containsKey("month")) {
+                    int year = ((Number) timeMap.get("year")).intValue();
+                    int month = ((Number) timeMap.get("month")).intValue();
+                    int day = ((Number) timeMap.get("day")).intValue();
+                    int hour = ((Number) timeMap.getOrDefault("hour", 0)).intValue();
+                    int minute = ((Number) timeMap.getOrDefault("minute", 0)).intValue();
+                    int second = ((Number) timeMap.getOrDefault("second", 0)).intValue();
+                    int nano = ((Number) timeMap.getOrDefault("nano", 0)).intValue();
+                    return LocalDateTime.of(year, month, day, hour, minute, second, nano);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("날짜/시간 변환 오류: {}", e.getMessage());
+        }
+        
+        return null;
     }
     
     @Override
@@ -70,6 +181,7 @@ public class EventRepositoryImpl implements EventRepository {
         
         return Integer.parseInt(countStr);
     }
+
     
     @Override
     public boolean decreaseQuantity(String eventId) {

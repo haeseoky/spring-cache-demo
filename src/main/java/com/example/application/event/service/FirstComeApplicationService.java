@@ -1,11 +1,13 @@
 package com.example.application.event.service;
 
 import com.example.application.event.dto.EventDto;
+import com.example.domain.event.entity.Event;
 import com.example.domain.event.entity.EventParticipation;
 import com.example.domain.event.repository.EventRepository;
 import com.example.domain.event.service.FirstComeEventDomainService;
 import com.example.infrastructure.lock.DistributedLock;
 import com.example.infrastructure.lock.LockException;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -27,7 +29,7 @@ public class FirstComeApplicationService {
     private static final Logger log = LoggerFactory.getLogger(FirstComeApplicationService.class);
     private static final String EVENT_PARTICIPANT_COUNT_KEY = "event:participants:";
     private static final String LOCK_KEY_PREFIX = "lock:event:";
-    private static final Duration LOCK_TIMEOUT = Duration.ofSeconds(5);
+    private static final Duration LOCK_TIMEOUT = Duration.ofSeconds(10);
     
     private final EventRepository eventRepository;
     private final FirstComeEventDomainService eventDomainService;
@@ -133,7 +135,13 @@ public class FirstComeApplicationService {
         log.debug("INCR를 사용한 이벤트 참여 시도: 이벤트={}, 사용자={}", eventId, userId);
         
         // 최대 참여 가능 수량
-        int totalQuantity = eventRepository.getRemainingQuantity(eventId);
+//        int totalQuantity = eventRepository.getRemainingQuantity(eventId);
+        int totalQuantity = eventRepository.findById(eventId).orElse(new Event()).getTotalQuantity();
+        try {
+            TimeUnit.MILLISECONDS.sleep(100);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         String participantCountKey = EVENT_PARTICIPANT_COUNT_KEY + eventId;
         
         // INCR로 참여자 수 증가 (원자적 연산)
@@ -142,7 +150,7 @@ public class FirstComeApplicationService {
         // 참여 가능 여부 판단
         if (currentParticipants > totalQuantity) {
             // 이미 마감된 경우 카운트 롤백
-            stringRedisTemplate.opsForValue().decrement(participantCountKey);
+//            stringRedisTemplate.opsForValue().decrement(participantCountKey);
             log.debug("참여 실패 (수량 초과): 이벤트={}, 사용자={}, 참여자 수/총수량={}/{}", 
                     eventId, userId, currentParticipants-1, totalQuantity);
             
