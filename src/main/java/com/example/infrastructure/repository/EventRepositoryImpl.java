@@ -3,6 +3,7 @@ package com.example.infrastructure.repository;
 import com.example.domain.common.Page;
 import com.example.domain.common.Pageable;
 import com.example.domain.common.SortDirection;
+import com.example.domain.common.SortUtils;
 import com.example.domain.event.entity.Event;
 import com.example.domain.event.repository.EventRepository;
 import org.slf4j.Logger;
@@ -259,25 +260,17 @@ public class EventRepositoryImpl implements EventRepository {
             }
         }
         
-        // 정렬 적용
-        if ("id".equals(pageable.getSortBy())) {
-            events.sort(Comparator.comparing(Event::getId));
-        } else if ("name".equals(pageable.getSortBy())) {
-            events.sort(Comparator.comparing(Event::getName));
-        } else if ("totalQuantity".equals(pageable.getSortBy())) {
-            events.sort(Comparator.comparing(Event::getTotalQuantity));
-        } else if ("remainingQuantity".equals(pageable.getSortBy())) {
-            events.sort(Comparator.comparing(Event::getRemainingQuantity));
-        } else if ("startTime".equals(pageable.getSortBy())) {
-            events.sort(Comparator.comparing(Event::getStartTime, Comparator.nullsLast(Comparator.naturalOrder())));
-        } else if ("endTime".equals(pageable.getSortBy())) {
-            events.sort(Comparator.comparing(Event::getEndTime, Comparator.nullsLast(Comparator.naturalOrder())));
-        }
+        // 정렬 공통화: SortUtils를 사용한 Comparator 생성 및 적용
+        Map<String, Function<Event, ?>> propertyExtractors = new HashMap<>();
+        propertyExtractors.put("id", Event::getId);
+        propertyExtractors.put("name", Event::getName);
+        propertyExtractors.put("totalQuantity", Event::getTotalQuantity);
+        propertyExtractors.put("remainingQuantity", Event::getRemainingQuantity);
+        propertyExtractors.put("startTime", Event::getStartTime);
+        propertyExtractors.put("endTime", Event::getEndTime);
+        propertyExtractors.put("active", Event::isActive);
         
-        // 정렬 방향 적용
-        if (SortDirection.DESC.equals(pageable.getDirection())) {
-            Collections.reverse(events);
-        }
+        events.sort(SortUtils.getComparator(pageable.getSortBy(), pageable.getDirection(), propertyExtractors));
         
         // 페이지네이션 적용
         int start = pageable.getPage() * pageable.getSize();
@@ -290,6 +283,8 @@ public class EventRepositoryImpl implements EventRepository {
         List<Event> pageContent = events.subList(start, end);
         return new Page<>(pageContent, pageable.getPage(), pageable.getSize(), events.size());
     }
+    
+
     
     @Override
     public long count() {
