@@ -1,0 +1,26 @@
+### Virtual Thread 정보 확인
+GET http://localhost:8080/api/thread-demo/info
+
+### Virtual Thread 작업 실행 (기본값: 1000개 작업, 100ms 대기)
+GET http://localhost:8080/api/thread-demo/virtual
+
+### Platform Thread 작업 실행 (기본값: 1000개 작업, 100ms 대기)
+GET http://localhost:8080/api/thread-demo/platform
+
+### Virtual Thread와 Platform Thread 성능 비교 (기본값: 1000개 작업, 100ms 대기)
+GET http://localhost:8080/api/thread-demo/compare
+
+### Virtual Thread 작업 실행 (사용자 정의: 5000개 작업, 50ms 대기)
+GET http://localhost:8080/api/thread-demo/virtual?taskCount=5000&sleepTimeMs=50
+
+### Platform Thread 작업 실행 (사용자 정의: 5000개 작업, 50ms 대기)
+GET http://localhost:8080/api/thread-demo/platform?taskCount=5000&sleepTimeMs=50
+
+### Virtual Thread와 Platform Thread 성능 비교 (사용자 정의: 5000개 작업, 50ms 대기)
+GET http://localhost:8080/api/thread-demo/compare?taskCount=5000&sleepTimeMs=50
+
+### Virtual Thread와 Platform Thread 성능 비교 (적은 작업 수)
+GET http://localhost:8080/api/thread-demo/compare?taskCount=100&sleepTimeMs=100
+
+### Virtual Thread와 Platform Thread 성능 비교 (많은 작업 수)
+GET http://localhost:8080/api/thread-demo/compare?taskCount=10000&sleepTimeMs=10
