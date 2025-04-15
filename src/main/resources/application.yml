@@ -7,5 +7,22 @@ spring:
     redis:
       host: localhost
       port: 6379
+      
+  # SQLite + JPA 설정 (로컬 데이터베이스 사용)
+  datasource:
+    url: jdbc:sqlite:./events.db
+    driver-class-name: org.sqlite.JDBC
+    username: sa
+    password: password
+  
+  jpa:
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        
 server:
   port: 8080

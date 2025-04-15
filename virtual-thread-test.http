@@ -24,3 +24,21 @@ GET http://localhost:8080/api/thread-demo/compare?taskCount=100&sleepTimeMs=100
 
 ### Virtual Thread와 Platform Thread 성능 비교 (많은 작업 수)
 GET http://localhost:8080/api/thread-demo/compare?taskCount=10000&sleepTimeMs=10
+
+### 세션에 사용자 정보 설정
+POST http://localhost:8080/api/thread-demo/session/user?userId=user123&userName=홍길동
+
+### 세션 정보 확인
+GET http://localhost:8080/api/thread-demo/session/info
+
+### 세션 컨텍스트를 이용한 Virtual Thread 작업 실행 (기본값)
+GET http://localhost:8080/api/thread-demo/with-session
+
+### 세션 컨텍스트를 이용한 Virtual Thread 작업 실행 (사용자 정의)
+GET http://localhost:8080/api/thread-demo/with-session?taskCount=2000&sleepTimeMs=30
+
+### 세션에 연결된 작업 상태 조회
+GET http://localhost:8080/api/thread-demo/session/status
+
+### 세션 초기화
+POST http://localhost:8080/api/thread-demo/session/clear

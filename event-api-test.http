@@ -1,0 +1,74 @@
+### 모든 이벤트 조회
+GET http://localhost:8080/api/events
+Accept: application/json
+
+### 단일 이벤트 조회
+GET http://localhost:8080/api/events/1
+Accept: application/json
+
+### 새 이벤트 생성
+POST http://localhost:8080/api/events
+Content-Type: application/json
+
+{
+  "title": "스프링 부트 워크샵",
+  "description": "스프링 부트와 JPA를 활용한 웹 애플리케이션 개발 워크샵",
+  "startDate": "2025-05-15T10:00:00",
+  "endDate": "2025-05-15T17:00:00",
+  "location": "서울시 강남구 테헤란로",
+  "organizer": "스프링 커뮤니티",
+  "maxParticipants": 50
+}
+
+### 이벤트 수정
+PUT http://localhost:8080/api/events/1
+Content-Type: application/json
+
+{
+  "title": "스프링 부트 & JPA 워크샵",
+  "description": "스프링 부트와 JPA를 활용한 웹 애플리케이션 개발 워크샵 (업데이트)",
+  "startDate": "2025-05-15T09:00:00",
+  "endDate": "2025-05-15T18:00:00",
+  "location": "서울시 강남구 테헤란로 123",
+  "organizer": "스프링 코리아 커뮤니티",
+  "maxParticipants": 60
+}
+
+### 이벤트 삭제
+DELETE http://localhost:8080/api/events/1
+
+### 활성화된 이벤트 조회
+GET http://localhost:8080/api/events/active
+Accept: application/json
+
+### 등록 가능한 이벤트 조회
+GET http://localhost:8080/api/events/registrable
+Accept: application/json
+
+### 예정된 이벤트 조회
+GET http://localhost:8080/api/events/upcoming
+Accept: application/json
+
+### 지난 이벤트 조회
+GET http://localhost:8080/api/events/past
+Accept: application/json
+
+### 이벤트 검색
+GET http://localhost:8080/api/events/search?keyword=스프링
+Accept: application/json
+
+### 장소별 이벤트 조회
+GET http://localhost:8080/api/events/location/서울
+Accept: application/json
+
+### 주최자별 이벤트 조회
+GET http://localhost:8080/api/events/organizer/스프링
+Accept: application/json
+
+### 이벤트 참가 등록
+POST http://localhost:8080/api/events/1/register
+Accept: application/json
+
+### 이벤트 참가 취소
+POST http://localhost:8080/api/events/1/cancel
+Accept: application/json
