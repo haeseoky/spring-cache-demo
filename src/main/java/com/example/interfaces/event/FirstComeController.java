@@ -22,7 +22,7 @@ import java.util.concurrent.Executors;
  * 선착순 이벤트 API 컨트롤러
  */
 @RestController
-@RequestMapping("/api/events")
+@RequestMapping("/api/events/first-come")
 public class FirstComeController {
     
     private static final Logger log = LoggerFactory.getLogger(FirstComeController.class);
