@@ -8,9 +8,9 @@ spring:
       host: localhost
       port: 6379
       
-  # SQLite + JPA 설정 (로컬 데이터베이스 사용)
+  # SQLite + JPA 설정 (Docker 컨테이너의 SQLite 데이터베이스 사용)
   datasource:
-    url: jdbc:sqlite:./events.db
+    url: jdbc:sqlite:file:./events.db
     driver-class-name: org.sqlite.JDBC
     username: sa
     password: password
